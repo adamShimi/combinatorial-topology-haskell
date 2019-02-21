@@ -1,8 +1,21 @@
 {-# LANGUAGE TemplateHaskell #-}
 
 module Simplex
-    (Simplex,
-     newSimplex) where
+    (Simplex(Simplex),
+    simplex,
+    newSimplex,
+    standardSimplex,
+    dimSimplex,
+    Proc(Proc),
+    allProcs,
+    procs,
+    ColSimplex(ColSimplex),
+    colSimplex,
+    newColSimplex,
+    standardColSimplex,
+    dimColSimplex,
+    coloring,
+    collapse) where
 
 import Control.Lens
 import Data.Set as Set
@@ -12,7 +25,7 @@ import Data.Set as Set
 -- Basic Simplexes
 
 newtype Simplex a = Simplex { _simplex :: (Set a) }
-    deriving (Eq)
+    deriving (Eq,Ord)
 makeLenses ''Simplex
 
 instance (Show a) => Show (Simplex a) where
@@ -29,10 +42,10 @@ newSimplex = Simplex . Set.fromList
 
 standardSimplex :: Int -> Simplex Int
 standardSimplex =
-    Simplex . Set.fromList . (flip take) [1..]
+    Simplex . Set.fromList . (flip Prelude.take) [1..]
 
-dimensionSimplex :: Simplex a -> Int
-dimensionSimplex = size . (view simplex)
+dimSimplex :: Simplex a -> Int
+dimSimplex = ((+) (-1)) . size . (view simplex)
 
 
 
@@ -48,7 +61,7 @@ allProcs :: [Proc]
 allProcs = [Proc n | n <- [1..]]
 
 procs :: Int -> [Proc]
-procs = (flip take) allProcs
+procs = (flip Prelude.take) allProcs
 
 
 
@@ -65,10 +78,10 @@ newColSimplex = ColSimplex . newSimplex
 
 standardColSimplex :: Int -> ColSimplex Proc Int
 standardColSimplex n =
-    ColSimplex . Simplex . Set.fromList $ zip (procs n) (take n [1..])
+    ColSimplex . Simplex . Set.fromList $ zip (procs n) (Prelude.take n [1..])
 
-dimensionColSimplex :: ColSimplex c a -> Int
-dimensionColSimplex = dimensionSimplex . (view colSimplex)
+dimColSimplex :: ColSimplex c a -> Int
+dimColSimplex = dimSimplex . (view colSimplex)
 
 coloring :: (Ord a, Ord c) => (a -> c) -> Simplex a -> ColSimplex c a
 coloring f = ColSimplex . (over simplex (Set.map (\x -> (f x,x))))
