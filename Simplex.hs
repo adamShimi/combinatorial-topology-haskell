@@ -6,6 +6,7 @@ module Simplex
     newSimplex,
     standardSimplex,
     dimSimplex,
+    unionSimplex,
     Proc(Proc),
     allProcs,
     procs,
@@ -47,6 +48,8 @@ standardSimplex =
 dimSimplex :: Simplex a -> Int
 dimSimplex = ((+) (-1)) . size . (view simplex)
 
+unionSimplex :: (Ord a) => Simplex a -> Simplex a -> Simplex a
+unionSimplex s1 = over (simplex) (Set.union (view (simplex) s1))
 
 
 -- Processes
