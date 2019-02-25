@@ -7,6 +7,7 @@ module Simplex
     standardSimplex,
     dimSimplex,
     unionSimplex,
+    isSubsimplexOf,
     Proc(Proc),
     allProcs,
     procs,
@@ -50,6 +51,9 @@ dimSimplex = ((+) (-1)) . size . (view simplex)
 
 unionSimplex :: (Ord a) => Simplex a -> Simplex a -> Simplex a
 unionSimplex s1 = over (simplex) (Set.union (view (simplex) s1))
+
+isSubsimplexOf :: (Ord a) => Simplex a -> Simplex a -> Bool
+isSubsimplexOf s1 = (Set.isSubsetOf (view simplex s1)) . (view simplex)
 
 
 -- Processes

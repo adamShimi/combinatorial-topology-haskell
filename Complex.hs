@@ -37,8 +37,14 @@ vertices :: (Ord a) => Complex a -> Set a
 vertices =
     (Set.foldr (\x acc -> Set.union (view simplex x) acc) Set.empty) . (view faces)
 
--- unionComplex :: (Ord a) => Complex a -> Complex a -> Complex a
--- TODO
+
+unionComplex :: (Ord a) => Complex a -> Complex a -> Complex a
+unionComplex c1 c2 =
+  over (faces) (Set.foldr (\x acc -> if (Set.null (Set.filter (isSubsimplexOf x) acc))
+                                      then Set.insert x acc
+                                      else acc)
+                            Set.empty) (over (faces) (Set.union (view faces c1)) c2)
+
 
 star :: (Ord a) => Simplex a -> Complex a -> Complex a
 star s = over (faces) (Set.filter ((Set.isSubsetOf (view simplex s)) . (view simplex)))
@@ -46,6 +52,7 @@ star s = over (faces) (Set.filter ((Set.isSubsetOf (view simplex s)) . (view sim
 
 link :: (Ord a) => Simplex a -> Complex a -> Complex a
 link s = over (faces) (Set.filter (not . (Set.isSubsetOf (view simplex s)) . (view simplex)))
+
 
 join :: (Ord a) => Complex a -> Complex a -> Complex a
 join c1 c2 =
@@ -56,6 +63,14 @@ join c1 c2 =
          )
          c2
 
--- stellarSubdiv :: (Ord a) => Complex a -> Complex a -> Complex a
--- TODO
 
+boundary :: (Ord a) => Simplex a -> Complex a
+boundary = Complex . (\s -> Set.foldr (\x acc ->
+                                        Set.insert (over (simplex) (Set.delete x) s)
+                                                    acc)
+                                      Set.empty
+                                      (view simplex s))
+
+-- Add a level of sets.
+-- stellarSubdiv :: (Ord a) => Simplex a -> Complex a
+-- stellarSubdiv s = join (Complex (Set.singleton s)) (boundary s)
