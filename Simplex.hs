@@ -23,6 +23,9 @@ import Control.Lens
 import Data.Set as Set
 
 
+-- Redéfinir les Sets avec de vrais instances de Show et Ord, parce
+-- que ce n'est pas possible là.
+
 
 -- Basic Simplexes
 

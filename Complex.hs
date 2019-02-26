@@ -71,6 +71,15 @@ boundary = Complex . (\s -> Set.foldr (\x acc ->
                                       Set.empty
                                       (view simplex s))
 
--- Add a level of sets.
--- stellarSubdiv :: (Ord a) => Simplex a -> Complex a
--- stellarSubdiv s = join (Complex (Set.singleton s)) (boundary s)
+
+viewBoundary :: (Ord a) => Simplex a -> Complex (Set a)
+viewBoundary = (over faces
+                     (Set.map (over simplex
+                                    (\y -> Set.map (Set.singleton) y)
+                              )
+                     )
+               ) . boundary
+
+
+stellarSubdiv :: (Ord a) => Simplex a -> Complex (Set a)
+stellarSubdiv simp@(Simplex s) = join (newComplex [Simplex (Set.singleton s)]) (viewBoundary simp)
