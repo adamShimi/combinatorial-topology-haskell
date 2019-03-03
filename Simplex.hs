@@ -4,6 +4,16 @@
 module Simplex
     (SSet(SSet),
     sset,
+    subset,
+    newSset,
+    unionSset,
+    sizeSset,
+    insertSset,
+    deleteSset,
+    differenceSset,
+    mapSset,
+    lookupMaxSset,
+    filterSset,
     Simplex(Simplex),
     simplex,
     newSimplex,
@@ -61,23 +71,44 @@ newSset = SSet . Set.fromList
 unionSset :: (Ord a) => SSet a -> SSet a -> SSet a
 unionSset (SSet s1) (SSet s2) = SSet (Set.union s1 s2)
 
+sizeSset :: (Ord a) => SSet a -> Int
+sizeSset = size . (view sset)
+
+insertSset :: (Ord a) => a -> SSet a -> SSet a
+insertSset e = over sset (Set.insert e)
+
+deleteSset :: (Ord a) => a -> SSet a -> SSet a
+deleteSset e = over sset (Set.delete e)
+
+differenceSset :: (Ord a) => SSet a -> SSet a -> SSet a
+differenceSset s1 = over sset (Set.difference (s1 ^. sset))
+
 mapSset :: (Ord a,Ord b) => (a -> b) -> SSet a -> SSet b
 mapSset f = over sset (Set.map f)
+
+lookupMaxSset :: (Ord a) => SSet a -> Maybe a
+lookupMaxSset = Set.lookupMax . (view sset)
+
+filterSset :: (Ord a) => (a -> Bool) -> SSet a -> SSet a
+filterSset f = over sset (Set.filter f)
+
+--foldrSset :: (Ord a, Ord b) => (a -> b -> b) -> b -> SSet a -> b
+--foldrSset f init s =
+--    (over sset
+--          (Set.foldr (\x acc -> Set.union (view simplex x) acc)
+--                     Set.empty
+--          )
+--    )
 
 
 -- Basic Simplexes
 
-newtype Simplex a = Simplex { __simplex :: (SSet a) }
+newtype Simplex a = Simplex { _simplex :: (SSet a) }
     deriving (Eq,Ord)
 makeLenses ''Simplex
 
-
-simplex :: (Functor f, Profunctor p) =>
-    p (Set a0) (f (Set a1)) -> p (Simplex a0) (f (Simplex a1))
-simplex = _simplex . sset
-
 instance (Show a) => Show (Simplex a) where
-    show = show . (view _simplex)
+    show = show . (view simplex)
 
 newSimplex :: (Ord a) => [a] -> Simplex a
 newSimplex = Simplex . newSset
@@ -86,14 +117,14 @@ standardSimplex :: Int -> Simplex Int
 standardSimplex =
     Simplex . newSset . (flip Prelude.take) [1..]
 
-dimSimplex :: Simplex a -> Int
-dimSimplex = ((+) (-1)) . size . (view (simplex))
+dimSimplex :: (Ord a) => Simplex a -> Int
+dimSimplex = ((+) (-1)) . sizeSset . (view simplex)
 
 unionSimplex :: (Ord a) => Simplex a -> Simplex a -> Simplex a
-unionSimplex s1 = over _simplex (unionSset (s1 ^. _simplex))
+unionSimplex s1 = over simplex (unionSset (s1 ^. simplex))
 
 subsimplex :: (Ord a) => Simplex a -> Simplex a -> Bool
-subsimplex s1 = (subset (s1 ^. _simplex)) . (view _simplex)
+subsimplex s1 = (subset (s1 ^. simplex)) . (view simplex)
 
 
 -- Processes
@@ -125,13 +156,13 @@ newColSimplex = ColSimplex . newSimplex
 
 standardColSimplex :: Int -> ColSimplex Proc Int
 standardColSimplex n =
-    ColSimplex . Simplex . SSet . Set.fromList $ zip (procs n) (Prelude.take n [1..])
+    ColSimplex . newSimplex $ zip (procs n) (Prelude.take n [1..])
 
-dimColSimplex :: ColSimplex c a -> Int
+dimColSimplex :: (Ord c, Ord a) => ColSimplex c a -> Int
 dimColSimplex = dimSimplex . (view colSimplex)
 
 coloring :: (Ord a, Ord c) => (a -> c) -> Simplex a -> ColSimplex c a
-coloring f = ColSimplex . (over simplex (Set.map (\x -> (f x,x))))
+coloring f = ColSimplex . (over simplex (mapSset (\x -> (f x,x))))
 
 collapse :: (Ord a, Ord c) => ColSimplex c a -> Simplex a
-collapse = (over simplex (Set.map (snd))) . (view colSimplex)
+collapse = (over simplex (mapSset (snd))) . (view colSimplex)
