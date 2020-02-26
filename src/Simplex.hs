@@ -42,16 +42,16 @@ newSimplex :: (Ord a) => [a] -> Simplex a
 newSimplex = Simplex . Set.fromList
 
 standardSimplex :: Int -> Simplex Int
-standardSimplex = Simplex . Set.fromList . (flip Prelude.take) [1..]
+standardSimplex = newSimplex . (flip Prelude.take) [1..]
 
 dimSimplex :: (Ord a) => Simplex a -> Int
 dimSimplex = (+ (-1)) . size . simplex
 
 unionSimplex :: (Ord a) => Simplex a -> Simplex a -> Simplex a
-unionSimplex s1 s2 = Simplex $ Set.union (simplex s1) (simplex s2)
+unionSimplex s1 = Simplex . (Set.union (simplex s1)) . simplex
 
 subSimplex :: (Ord a) => Simplex a -> Simplex a -> Bool
-subSimplex s1 s2 = Set.isSubsetOf (simplex s1) (simplex s2)
+subSimplex s1 = Set.isSubsetOf (simplex s1) . simplex
 
 
 -- Colored Simplexes
